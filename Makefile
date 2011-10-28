@@ -14,4 +14,7 @@ clean:
 
 dist-clean: clean
 
+run:
+	ERL_LIBS=deps erl -pa ebin -boot start_sasl -s game
+
 .PHONY: app
