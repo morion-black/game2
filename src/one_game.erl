@@ -50,6 +50,9 @@ handle_info(check, #game{clients = []} = Game) ->
   io:format("Exit game ~p~n", [Game#game.name]),
   {stop, normal, Game};
 
+handle_info(check, #game{} = Game) ->
+  {noreply, Game};
+
 handle_info({'DOWN', _, process, User, _Reason}, #game{clients = Clients} = Game) ->
   Clients1 = lists:keydelete(User, #client.pid, Clients),
   {noreply, Game#game{clients = Clients1}};

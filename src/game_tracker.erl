@@ -11,7 +11,7 @@
 
 %% External API
 -export([start_link/0]).
--export([find_or_create/2]).
+-export([find_or_create/2, open/3]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -42,7 +42,12 @@ find_or_create(Name, Options) ->
     [#entry{pid = Pid}] -> {ok, Pid}
   end,
   {ok, Pid_}.
-  
+
+
+open(Name, UserId, Options) ->
+  {ok, Pid} = find_or_create(Name, Options),
+  one_game:subscribe(Pid, UserId),
+  {ok, Pid}.
 
 %%----------------------------------------------------------------------
 %% @spec (Port::integer()) -> {ok, State}           |
