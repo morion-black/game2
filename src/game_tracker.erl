@@ -11,7 +11,7 @@
 
 %% External API
 -export([start_link/0]).
--export([find_or_create/2, open/3]).
+-export([find_or_create/2, open/3, send_message/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
@@ -31,6 +31,11 @@ start_link() ->
   pid
 }).
 
+
+send_message(Name, Message) ->
+  {ok, Pid} = find_or_create(Name, []),
+  one_game:send_message(Pid, Message).
+  
 
 %%%------------------------------------------------------------------------
 %%% Callback functions from gen_server

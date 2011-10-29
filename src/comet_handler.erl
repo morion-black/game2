@@ -18,6 +18,7 @@ handle(Req, State) ->
     Session_ ->
       {ok, Session_}
   end,
+  io:format("Comet process: ~p~n", [self()]),
   user_session:subscribe(Session, GameName),
   {ok, Messages} = user_session:wait_message(Session),
   % io:format("Hi: ~p ~s ~p~n", [UserId, GameName, Messages]),

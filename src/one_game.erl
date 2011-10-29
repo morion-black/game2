@@ -3,7 +3,7 @@
 -behaviour(gen_server).
 
 -export([start_link/2]).
--export([subscribe/2, info/1]).
+-export([subscribe/2, info/1, send_message/2]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 
@@ -24,7 +24,10 @@ start_link(Name, Options) ->
   ref,
   pid
 }).
-  
+
+
+send_message(Game, Message) ->
+  gen_server:call(Game, {message, Message}).
 
 subscribe(Game, UserId) ->
   (catch gen_server:call(Game, {subscribe, UserId, self()})).
@@ -41,8 +44,18 @@ init([Name, Options]) ->
   }}.
 
 handle_call({subscribe, UserId, Pid}, _From, #game{clients = Clients} = State) ->
-  Ref = erlang:monitor(process, Pid),
-  {reply, ok, State#game{clients = [#client{user_id = UserId, pid = Pid, ref = Ref}|Clients]}};
+  case lists:keyfind(Pid, #client.pid, Clients) of
+    #client{} ->
+      {reply, ok, State};
+    _ ->  
+      Ref = erlang:monitor(process, Pid),
+      {reply, ok, State#game{clients = [#client{user_id = UserId, pid = Pid, ref = Ref}|Clients]}}
+  end;
+
+handle_call({message, Message}, _From, #game{clients = Clients} = State) ->
+  io:format("Clients of game: ~p~n", [Clients]),
+  [Pid ! {message, Message} || #client{pid = Pid} <- Clients],
+  {reply, ok, State};
 
 handle_call(info, _From, #game{slots = Slots, size = Size} = State) ->
   Info = [{size, Size}, {slots, Slots}],

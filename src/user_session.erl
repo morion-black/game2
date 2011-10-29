@@ -45,11 +45,12 @@ handle_call({subscribe, GameName}, _From, #session{user_id = UserId} = Session) 
   {reply, {ok, Pid}, Session#session{last_seen_at = erlang:now(), game = Pid}};
 
 
-handle_call(wait_message, From, #session{messages = [], wait_queue = Queue} = Session) ->
-  {noreply, Session#session{wait_queue = [From|Queue]}};
+handle_call(wait_message, {Pid, _Ref} = From, #session{messages = [], wait_queue = Queue} = Session) ->
+  Queue1 = lists:keydelete(Pid, 1, Queue),
+  {noreply, Session#session{wait_queue = [From|Queue1]}};
 
 handle_call(wait_message, _From, #session{messages = Messages} = Session) ->
-  {reply, {ok, Messages}, Session};
+  {reply, {ok, Messages}, Session#session{messages = []}};
 
 handle_call(_Call, _From, State) ->
   {stop, {unknown_call, _Call}, State}.
@@ -69,12 +70,17 @@ handle_info(check, #session{last_seen_at = LastSeenAt} = Session) ->
   end;
 
 handle_info({message, Message}, #session{wait_queue = Queue, messages = Messages} = Session) ->
+  io:format("Msg: ~p ~p ~p, ~p~n", [self(), Queue, Message, Messages]),
   Msg1 = [Message|Messages],
   if
     Queue == [] ->
       {noreply, Session#session{messages = Msg1}};
-    true ->  
-      [gen_server:reply(From, {ok, Msg1}) || From <- Queue],
+    true ->
+      lists:foreach(fun(From) ->
+        io:format("We ~p send ~p to ~p ~n", [self(), Msg1, From]),
+        gen_server:reply(From, {ok, Msg1})
+      end, Queue),
+      % [gen_server:reply(From, {ok, Msg1}) || From <- Queue],
       {noreply, Session#session{wait_queue = [], messages = []}}
   end;
 
