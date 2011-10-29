@@ -24,5 +24,30 @@ start_link() ->
 %% ===================================================================
 
 init([]) ->
-    {ok, { {one_for_one, 5, 10}, []} }.
+  Supervisors = [
+  {   game_tracker_sup,
+      {game_tracker,start_link,[]},
+      permanent,                               % Restart  = permanent | transient | temporary
+      1000,                                % Shutdown = brutal_kill | int() >= 0 | infinity
+      worker,                              % Type     = worker | supervisor
+      [game_tracker]                                       % Modules  = [Module] | dynamic
+  }
+  ],
+    {ok, { {one_for_one, 5, 10}, Supervisors} }.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
