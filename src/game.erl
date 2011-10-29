@@ -15,6 +15,7 @@ start() ->
 	application:start(public_key),
 	application:start(ssl),
 	application:start(cowboy),
+	application:start(gproc),
   sync:go(),
 	application:start(game).
 

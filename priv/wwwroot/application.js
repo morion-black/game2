@@ -1,6 +1,6 @@
 function runComet() {
   $.ajax({
-    url: "/comet",
+    url: "/comet?user_id="+15,
     type: 'post',
     data: {},
     cache: false,
