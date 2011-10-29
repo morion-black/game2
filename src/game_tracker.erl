@@ -6,25 +6,43 @@
 -module(game_tracker).
 -author('Max Lapshin <max@maxidoors.ru>').
 -behaviour(gen_server).
+-include_lib("stdlib/include/ms_transform.hrl").
 
 
 %% External API
--export([start_link/1]).
+-export([start_link/0]).
+-export([find_or_create/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 
 
-start_link(Options) ->
-  gen_server:start_link({local, ?MODULE}, ?MODULE, [Options], []).
+start_link() ->
+  gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
+-record(state, {
+  clients
+}).
 
+-record(entry, {
+  name,
+  ref,
+  pid
+}).
 
 
 %%%------------------------------------------------------------------------
 %%% Callback functions from gen_server
 %%%------------------------------------------------------------------------
+
+find_or_create(Name, Options) ->
+  {ok,Pid_} = case ets:lookup(?MODULE, Name) of
+    [] -> gen_server:call(?MODULE, {find_or_create,Name,Options});
+    [#entry{pid = Pid}] -> {ok, Pid}
+  end,
+  {ok, Pid_}.
+  
 
 %%----------------------------------------------------------------------
 %% @spec (Port::integer()) -> {ok, State}           |
@@ -38,8 +56,12 @@ start_link(Options) ->
 %%----------------------------------------------------------------------
 
 
-init([Options]) ->
-  {ok, state}.
+init([]) ->
+  ets:new(?MODULE, [public,named_table,{keypos,#entry.name}]),
+
+  {ok, #state{
+  
+  }}.
 
 %%-------------------------------------------------------------------------
 %% @spec (Request, From, State) -> {reply, Reply, State}          |
@@ -53,6 +75,18 @@ init([Options]) ->
 %% @end
 %% @private
 %%-------------------------------------------------------------------------
+handle_call({find_or_create, Name, Options}, _From, #state{} = Tracker) ->
+  Pid = case ets:lookup(?MODULE, Name) of
+    [] ->
+      {ok, Pid_} = game_sup:start_game(Name, Options),
+      Ref = erlang:monitor(process, Pid_),
+      ets:insert(?MODULE, #entry{name = Name, ref = Ref, pid = Pid_}),
+      Pid_;
+    [#entry{pid = Pid_}] ->
+      Pid_
+  end,
+  {reply, {ok,Pid}, Tracker};
+
 handle_call(Request, _From, State) ->
   {stop, {unknown_call, Request}, State}.
 
@@ -79,8 +113,9 @@ handle_cast(_Msg, State) ->
 %% @end
 %% @private
 %%-------------------------------------------------------------------------
-handle_info({'DOWN', _, process, Client, _Reason}, Server) ->
-  {noreply, Server};
+handle_info({'DOWN', _, process, Game, _Reason}, #state{} = Tracker) ->
+  ets:select_delete(?MODULE, ets:fun2ms(fun(#entry{pid = Pid}) when Game == Pid -> true end)),
+  {noreply, Tracker};
 
 handle_info(_Info, State) ->
   {stop, {unknown_message, _Info}, State}.

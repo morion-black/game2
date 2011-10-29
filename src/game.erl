@@ -15,7 +15,7 @@ start() ->
 	application:start(public_key),
 	application:start(ssl),
 	application:start(cowboy),
-	sync:go(),
+  sync:go(),
 	application:start(game).
 
 start(_Type, _Args) ->
