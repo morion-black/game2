@@ -33,6 +33,9 @@ function runComet() {
     success: function(data, textStatus) {
       // eval(data);
       console.log(data);
+      for(var i = 0; i < data.length; i++) {
+        handleComet(data[i]);
+      }
       if(console) console.log("Restarting comet after success");
       setTimeout(runComet, 50);
     },
@@ -44,6 +47,20 @@ function runComet() {
   });
 }
 $(runComet);
+
+function handleComet(data) {
+  console.log("Hi");
+  console.log(data);
+  if(data.move) {
+    $("#slot_"+data.x+"_"+data.y).addClass("user"+data.user_id);
+    return;
+  }
+  
+  if(data.winner) {
+    $("#slotsHolder").prepend("Winner "+data.winner);
+  }
+  
+}
 
 function message(message) {
   $.get("/message", {message : message, game : window.game, user_id : window.user_id}, function(reply) {
@@ -71,8 +88,8 @@ $(function() {
         } else {
           klass=""
         }
-        s += "<td id='slot_"+i+"_"+j+"' class='"+klass+"'>"+
-        "<a href='#' onclick='move("+i+","+j+"); return false'>&nbsp;</a>"+
+        s += "<td id='slot_"+j+"_"+i+"' class='"+klass+"'>"+
+        "<a href='#' onclick='move("+j+","+i+"); return false'>&nbsp;</a>"+
         "</td>";
       }
       s += "</tr>";

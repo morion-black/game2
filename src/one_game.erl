@@ -60,11 +60,12 @@ handle_call({move, UserId, X, Y}, _From, #game{slots = Slots, size = Size, clien
   case array:get(Offset, Slots) of
     undefined ->
       Slots1 = array:set(Offset, UserId, Slots),
-      Msg = [{move, [{user_id,UserId},{x,X},{y,Y}]}],
+      Msg = [{move, true}, {user_id,UserId},{x,X},{y,Y}],
       [Pid ! {message, Msg} || #client{pid = Pid} <- Clients],
       case has_victory(UserId, Slots1, Size) of
         true ->
           [Pid ! {message, [{winner,UserId}]} || #client{pid = Pid} <- Clients],
+          self() ! stop,
           {reply, {ok, true}, State#game{slots = Slots}};
         false ->
           {reply, {ok, true}, State#game{slots = Slots1}}
@@ -104,6 +105,9 @@ handle_info(check, #game{clients = []} = Game) ->
 
 handle_info(check, #game{} = Game) ->
   {noreply, Game};
+
+handle_info(stop, #game{} = Game) ->
+  {stop, normal, Game};
 
 handle_info({'DOWN', _, process, User, _Reason}, #game{clients = Clients} = Game) ->
   Clients1 = lists:keydelete(User, #client.pid, Clients),

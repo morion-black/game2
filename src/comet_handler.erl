@@ -21,7 +21,7 @@ handle(Req, State) ->
   user_session:subscribe(Session, GameName),
   {ok, Messages} = user_session:wait_message(Session),
   % io:format("Hi: ~p ~s ~p~n", [UserId, GameName, Messages]),
-  {ok, Req3} = cowboy_http_req:reply(200, [{'Content-Type', <<"application/javascript">>}], 
+  {ok, Req3} = cowboy_http_req:reply(200, [{'Content-Type', <<"application/json">>}], 
     iolist_to_binary(mochijson2:encode(Messages)), 
   Req2),
   {ok, Req3, State}.
