@@ -16,7 +16,7 @@ handle(Req, State) ->
   UserId = list_to_integer(binary_to_list(UserIdBin)),
   X = list_to_integer(binary_to_list(XBin)),
   Y = list_to_integer(binary_to_list(YBin)),
-  {ok, Game} = game_tracker:find_or_open(GameName, []),
+  {ok, Game} = game_tracker:find_or_create(GameName, []),
   {ok, Reply} = one_game:move(Game, UserId, X, Y),
   % io:format("Hi: ~p ~s ~p~n", [UserId, GameName, Messages]),
   {ok, Req3} = cowboy_http_req:reply(200, [{'Content-Type', <<"application/json">>}], 

@@ -51,9 +51,39 @@ function message(message) {
   });
 }
 
+function move(x, y) {
+  $.get("/move", {game : window.game, user_id : window.user_id, x:x, y:y}, function(reply) {
+    console.log(reply);
+  });
+}
 
 $(function() {
   $.get("/game_info", {game : window.game}, function(game) {
+    var i = 0, j = 0;
+    var klass = "";
+    
+    var s = "<table class='slots'>";
+    for(i = 0; i < game.size; i++) {
+      s += "<tr>";
+      for(j = 0; j < game.size; j++) {
+        if(game.slots[i*3 + j]) {
+          klass = "user"+game.slots[i*3 + j];
+        } else {
+          klass=""
+        }
+        s += "<td id='slot_"+i+"_"+j+"' class='"+klass+"'>"+
+        "<a href='#' onclick='move("+i+","+j+"); return false'>&nbsp;</a>"+
+        "</td>";
+      }
+      s += "</tr>";
+    }
+    
+    s += "</table>";
+    
+    $("#slotsHolder").html(s);
+    
+    
+    
     console.log(game);
   });
   

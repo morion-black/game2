@@ -65,9 +65,9 @@ handle_call({move, UserId, X, Y}, _From, #game{slots = Slots, size = Size, clien
       case has_victory(UserId, Slots1, Size) of
         true ->
           [Pid ! {message, [{winner,UserId}]} || #client{pid = Pid} <- Clients],
-          {reply, {ok, winner}, State#game{slots = Slots}};
+          {reply, {ok, true}, State#game{slots = Slots}};
         false ->
-          {reply, ok, State#game{slots = Slots1}}
+          {reply, {ok, true}, State#game{slots = Slots1}}
       end;
     _Else ->
       {reply, {error, slot_locked}, State}
@@ -88,7 +88,7 @@ handle_call({message, Message}, _From, #game{clients = Clients} = State) ->
   {reply, ok, State};
 
 handle_call(info, _From, #game{slots = Slots, size = Size} = State) ->
-  Info = [{size, Size}, {slots, Slots}],
+  Info = [{size, Size}, {slots, array:to_list(Slots)}],
   {reply, {ok, Info}, State};
 
 handle_call(_Call, _From, State) ->
