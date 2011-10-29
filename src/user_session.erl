@@ -70,17 +70,12 @@ handle_info(check, #session{last_seen_at = LastSeenAt} = Session) ->
   end;
 
 handle_info({message, Message}, #session{wait_queue = Queue, messages = Messages} = Session) ->
-  io:format("Msg: ~p ~p ~p, ~p~n", [self(), Queue, Message, Messages]),
   Msg1 = [Message|Messages],
   if
     Queue == [] ->
       {noreply, Session#session{messages = Msg1}};
     true ->
-      lists:foreach(fun(From) ->
-        io:format("We ~p send ~p to ~p ~n", [self(), Msg1, From]),
-        gen_server:reply(From, {ok, Msg1})
-      end, Queue),
-      % [gen_server:reply(From, {ok, Msg1}) || From <- Queue],
+      [gen_server:reply(From, {ok, Msg1}) || From <- Queue],
       {noreply, Session#session{wait_queue = [], messages = []}}
   end;
 

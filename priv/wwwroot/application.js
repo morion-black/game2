@@ -22,6 +22,7 @@ function parseQueryString() {
 
 var params = parseQueryString();
 window.user_id = params["user_id"];
+window.game = params["game"];
 
 function runComet() {
   $.ajax({
@@ -44,9 +45,17 @@ function runComet() {
 }
 $(runComet);
 
+function message(message) {
+  $.get("/message", {message : message, game : window.game, user_id : window.user_id}, function(reply) {
+    
+  });
+}
+
+
 $(function() {
-  $.get("/game_info", {game : "lala"}, function(game) {
+  $.get("/game_info", {game : window.game}, function(game) {
     console.log(game);
   });
+  
 })
 
