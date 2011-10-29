@@ -19,9 +19,11 @@ handle(Req, State) ->
       {ok, Session_}
   end,
   user_session:subscribe(Session, GameName),
-  % io:format("Hi: ~p ~p~n", [UserId, Session]),
-  timer:sleep(5000),
-  {ok, Req3} = cowboy_http_req:reply(200, [{'Content-Type', <<"application/javascript">>}], <<"true">>, Req2),
+  {ok, Messages} = user_session:wait_message(Session),
+  io:format("Hi: ~p ~s ~p~n", [UserId, GameName, Messages]),
+  {ok, Req3} = cowboy_http_req:reply(200, [{'Content-Type', <<"application/javascript">>}], 
+    iolist_to_binary(mochijson2:encode(Messages)), 
+  Req2),
   {ok, Req3, State}.
 
 terminate(_Req, _State) ->

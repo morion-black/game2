@@ -3,7 +3,7 @@
 -behaviour(gen_server).
 
 -export([start_link/2]).
--export([subscribe/2]).
+-export([subscribe/2, wait_message/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 
@@ -13,13 +13,18 @@ start_link(UserId, Options) ->
 subscribe(Session, GameName) ->
   gen_server:call(Session, {subscribe, GameName}).
 
+wait_message(Session) ->
+  gen_server:call(Session, wait_message, 20000).
+
 -record(session, {
   user_id,
+  messages = [],
+  wait_queue = [],
   last_seen_at,
   game
 }).
 
--define(TIMEOUT, 6000).
+-define(TIMEOUT, 12000).
 
 init([UserId, _Options]) ->
   gproc:add_local_name({user_id,UserId}),
@@ -33,6 +38,13 @@ init([UserId, _Options]) ->
 handle_call({subscribe, GameName}, _From, #session{user_id = UserId} = Session) ->
   {ok, Pid} = game_tracker:open(GameName, UserId, []),
   {reply, {ok, Pid}, Session#session{last_seen_at = erlang:now(), game = Pid}};
+
+
+handle_call(wait_message, From, #session{messages = [], wait_queue = Queue} = Session) ->
+  {noreply, Session#session{wait_queue = [From|Queue]}};
+
+handle_call(wait_message, _From, #session{messages = Messages} = Session) ->
+  {reply, {ok, Messages}, Session};
 
 handle_call(_Call, _From, State) ->
   {stop, {unknown_call, _Call}, State}.
@@ -49,6 +61,16 @@ handle_info(check, #session{last_seen_at = LastSeenAt} = Session) ->
       {stop, normal, Session};
     true ->
       {noreply, Session}
+  end;
+
+handle_info({message, Message}, #session{wait_queue = Queue, messages = Messages} = Session) ->
+  Msg1 = [Message|Messages],
+  if
+    Queue == [] ->
+      {noreply, Session#session{messages = Msg1}};
+    true ->  
+      [gen_server:reply(From, {ok, Msg1}) || From <- Queue],
+      {noreply, Session#session{wait_queue = [], messages = []}}
   end;
 
 handle_info({'DOWN', _, process, _User, _Reason}, #session{} = Session) ->

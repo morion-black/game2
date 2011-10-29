@@ -27,14 +27,14 @@ start_link(Name, Options) ->
   
 
 subscribe(Game, UserId) ->
-  gen_server:call(Game, {subscribe, UserId, self()}).
+  (catch gen_server:call(Game, {subscribe, UserId, self()})).
   
 info(Game) ->
   gen_server:call(Game, info).
   
 init([Name, Options]) ->
   put(our_name, Name),
-  timer:send_interval(2000, check),
+  timer:send_interval(20000, check),
   {ok, #game{
     name = Name,
     options = Options
