@@ -14,7 +14,12 @@ subscribe(Session, GameName) ->
   gen_server:call(Session, {subscribe, GameName}).
 
 wait_message(Session) ->
-  gen_server:call(Session, wait_message, 20000).
+  try gen_server:call(Session, wait_message, 3000) of
+    {ok, Reply} -> {ok, Reply}
+  catch
+    exit:{timeout, _} ->
+      {ok, []}
+  end.
 
 -record(session, {
   user_id,
@@ -91,10 +96,6 @@ terminate(_Reason, _State) ->
 %%-------------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
-  
-  
-  
-  
   
   
   

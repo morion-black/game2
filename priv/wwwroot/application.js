@@ -25,7 +25,7 @@ window.user_id = params["user_id"];
 
 function runComet() {
   $.ajax({
-    url: "/comet?user_id="+user_id,
+    url: "/comet?user_id="+user_id+"&game=lala",
     type: 'post',
     data: {},
     cache: false,
