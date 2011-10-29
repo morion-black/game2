@@ -15,20 +15,24 @@ subscribe(Session, GameName) ->
 
 -record(session, {
   user_id,
+  last_seen_at,
   game
 }).
 
+-define(TIMEOUT, 6000).
 
 init([UserId, _Options]) ->
   gproc:add_local_name({user_id,UserId}),
   put(user_id, UserId),
+  timer:send_interval(?TIMEOUT, check),
   {ok, #session{
+    last_seen_at = erlang:now(),
     user_id = UserId
   }}.
 
 handle_call({subscribe, GameName}, _From, #session{user_id = UserId} = Session) ->
   {ok, Pid} = game_tracker:open(GameName, UserId, []),
-  {reply, {ok, Pid}, Session#session{game = Pid}};
+  {reply, {ok, Pid}, Session#session{last_seen_at = erlang:now(), game = Pid}};
 
 handle_call(_Call, _From, State) ->
   {stop, {unknown_call, _Call}, State}.
@@ -37,7 +41,17 @@ handle_call(_Call, _From, State) ->
 handle_cast(_Msg, State) ->
   {stop, {unknown_cast, _Msg}, State}.
 
-handle_info({'DOWN', _, process, User, _Reason}, #session{} = Session) ->
+handle_info(check, #session{last_seen_at = LastSeenAt} = Session) ->
+  Delta = timer:now_diff(erlang:now(), LastSeenAt) div 1000,
+  if
+    Delta > 2*?TIMEOUT ->
+      io:format("User session dies: ~p~n", [Session]),
+      {stop, normal, Session};
+    true ->
+      {noreply, Session}
+  end;
+
+handle_info({'DOWN', _, process, _User, _Reason}, #session{} = Session) ->
   {noreply, Session};
 
 handle_info(_Info, State) ->
