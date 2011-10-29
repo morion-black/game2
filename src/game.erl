@@ -23,6 +23,7 @@ start(_Type, _Args) ->
 	Dispatch = [
 		{'_', [
 			{[<<"comet">>], comet_handler, []},
+			{[<<"game_info">>], game_info_handler, []},
 			{'_', http_file_handler, [{root, "priv/wwwroot"}]}
 		]}
 	],

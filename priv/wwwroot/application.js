@@ -16,5 +16,11 @@ function runComet() {
     }
   });
 }
-
 $(runComet);
+
+$(function() {
+  $.get("/game_info", {game : "lala"}, function(game) {
+    console.log(game);
+  });
+})
+

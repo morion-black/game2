@@ -47,6 +47,7 @@ find_or_create(Name, Options) ->
 open(Name, UserId, Options) ->
   {ok, Pid} = find_or_create(Name, Options),
   one_game:subscribe(Pid, UserId),
+  erlang:monitor(process, Pid),
   {ok, Pid}.
 
 %%----------------------------------------------------------------------

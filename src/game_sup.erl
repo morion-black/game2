@@ -42,10 +42,10 @@ init([one_game]) ->
   ]}};
 
 
-init([user]) ->
+init([user_session]) ->
   {ok, {{simple_one_for_one, 1000, 1000}, [
     {   undefined,                               % Id       = internal id
-    {user,start_link,[]},                  % StartFun = {M, F, A}
+    {user_session,start_link,[]},                  % StartFun = {M, F, A}
     temporary,                               % Restart  = permanent | transient | temporary
     2000,                                    % Shutdown = brutal_kill | int() >= 0 | infinity
     worker,                                  % Type     = worker | supervisor
@@ -72,7 +72,7 @@ init([]) ->
       []                                       % Modules  = [Module] | dynamic
   },
   {   user_sup,
-      {supervisor,start_link,[{local, user_sup}, ?MODULE, [user]]},
+      {supervisor,start_link,[{local, user_sup}, ?MODULE, [user_session]]},
       permanent,                               % Restart  = permanent | transient | temporary
       infinity,                                % Shutdown = brutal_kill | int() >= 0 | infinity
       supervisor,                              % Type     = worker | supervisor

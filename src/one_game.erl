@@ -3,7 +3,7 @@
 -behaviour(gen_server).
 
 -export([start_link/2]).
--export([subscribe/2]).
+-export([subscribe/2, info/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 
@@ -13,6 +13,8 @@ start_link(Name, Options) ->
 
 -record(game, {
   name,
+  size = 3,
+  slots = [],
   clients = [],
   options
 }).
@@ -27,6 +29,9 @@ start_link(Name, Options) ->
 subscribe(Game, UserId) ->
   gen_server:call(Game, {subscribe, UserId, self()}).
   
+info(Game) ->
+  gen_server:call(Game, info).
+  
 init([Name, Options]) ->
   put(our_name, Name),
   timer:send_interval(2000, check),
@@ -38,6 +43,10 @@ init([Name, Options]) ->
 handle_call({subscribe, UserId, Pid}, _From, #game{clients = Clients} = State) ->
   Ref = erlang:monitor(process, Pid),
   {reply, ok, State#game{clients = [#client{user_id = UserId, pid = Pid, ref = Ref}|Clients]}};
+
+handle_call(info, _From, #game{slots = Slots, size = Size} = State) ->
+  Info = [{size, Size}, {slots, Slots}],
+  {reply, {ok, Info}, State};
 
 handle_call(_Call, _From, State) ->
   {stop, {unknown_call, _Call}, State}.
