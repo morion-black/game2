@@ -25,6 +25,7 @@ start(_Type, _Args) ->
 			{[<<"comet">>], comet_handler, []},
 			{[<<"game_info">>], game_info_handler, []},
 			{[<<"message">>], message_handler, []},
+			{[<<"move">>], move_handler, []},
 			{'_', http_file_handler, [{root, "priv/wwwroot"}]}
 		]}
 	],
